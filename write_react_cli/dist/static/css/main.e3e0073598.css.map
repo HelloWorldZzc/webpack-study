@@ -1,0 +1,1 @@
+{"version":3,"file":"static/css/main.e3e0073598.css","mappings":"AAAA,MACE,qBACF","sources":["webpack://write_react_cli/./src/page/Home/Home.less"],"sourcesContent":["#test{\n  background-color: blue;\n}\n"],"names":[],"sourceRoot":""}

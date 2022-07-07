@@ -1,0 +1,2 @@
+"use strict";(self.webpackChunkwrite_react_cli=self.webpackChunkwrite_react_cli||[]).push([[179],{960:function(e,t,n){var r=n(294),l=n(745);var c=function(){return r.createElement("h2",{id:"test"},"这是home组件！")};var u=function(){return r.createElement("div",null,r.createElement("h1",null,"app"),r.createElement("hr",null),r.createElement(c,null))};l.createRoot(document.getElementById("app")).render(r.createElement(u,null))}},function(e){e.O(0,[745],(function(){return t=960,e(e.s=t);var t}));e.O()}]);
+//# sourceMappingURL=main.616dd33951.js.map
