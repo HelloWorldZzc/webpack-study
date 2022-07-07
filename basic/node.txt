@@ -1,0 +1,309 @@
+---start(webpack基础)----
+tip:不要在package.json配置中使用"type": "module"让js语法变为ES6规范，不然后面webpack.config的配置会很难改的
+1、安装
+    使用npm init对项目进行初始化操作
+    使用npm i webpack webpack-cli安装好所需要依赖的包
+2、启动webpack
+    在没有config配置文件的时候，使用npx webpack xxx.js对文件进行打包，默认生成dist/main.js文件
+    在配置好config文件之后直接使用npx webpack即可，他会自动去config文件中查找配置信息去完成操作
+    注意：只能够帮我们构建js文件，有一些例如css,png文件需要使用特定的load才能使用
+3、webpack.config.js
+最基本的webpack配置如下
+const path=require("path")
+module.exports={
+    //入口文件
+    entry: "./src/a.js",//entry文件是相对路径
+    output: {
+        //文件的输出路径
+        path: path.resolve(__dirname,"dist"),//这里需要使用绝对路径
+        filename: "main.js"
+    },
+    module: {
+        rules: [
+            //loader的配置
+        ]
+    },
+    //插件
+    plugins: [
+        //plugins的相关配置
+    ],
+    //编译模式（生产模式还是开发模式）
+    mode:"development"
+}
+
+4、加载css文件
+需要学会从官方的文档中去寻找方法 https://webpack.docschina.org/loaders/css-loader/
+根据官方文件进行配置好相关的信息
+首先：要打包css的样式首先需要先有地方引入相关的样式文件
+其次：根据官方文档中的需求进行配置（config）
+ps：并不会生成相关的css文件，只要html页面使用script标签src生成的文件
+
+5、less,sass,stylus资源的处理
+与css大同小异，可以直接前往官方文档查看相关的load
+注：一个使用load，多个需要使用use
+要是报错了的话，可以查阅英文的官方文档，中文的官方文档是由英文的翻译过来，可能会不全
+
+6、处理图片资源
+直接引入相关的图片，即使不做任何配置也会进行打包
+但是有些图片我们想转换成base64字符串的格式，能够减少网络请求的次数
+但是他这个格式有缺点，会增大图片的大小，因此我们选择对占内存小的图片转化成base64的格式
+相关的配置如下所示（module的rules数组中新增加对象）：
+{
+                test: /\.(png|jpe?g|gif|webp)$/,
+                type: "asset",
+                parser: {
+                    dataUrlCondition: {
+                        maxSize: 10 * 1024 // 小于10kb的图片会被base64处理
+                    }
+                }
+            },
+
+7、文件输出目录的处理
+    要是不处理输出路径，那么把所有的内容都输出于一个文件夹中，显得有点乱的样子
+    tip:output的path路径是输出文件的根路径，后续所有的文件都要在此文件下进行添加
+    js的输出目录：output文件夹下的filename：“xxx”
+    图片的输出目录：处理图片资源的配置下，新增加generator属性后，再增加filename：“xxx” 此为图片的输出路径
+
+8、自动清空上一次的打包资源
+    再output问价路径下增加一个属性clean:true
+
+9、处理字体文件
+    处理字体文件首先是需要使用的咯，从网络下载字体图标并按照其要求使用
+    在module的rules数组中新增加{}对象，test使用正则表达式进行匹配文件的后缀
+    "type: "asset/resource"表示对文件原封不动的进行输出
+    generator中的filename与前面相同也是管理webpack编译后进行输出的路径与名字
+
+10、处理其他文件
+    可能我们会遇到其他类型的文件例如mp3,mp4等等
+    我们也需要webpack将其打包，但是webpack对其进行打包是完全不用更改的，直接进行输出即可
+    我们可以参照处理文字文件的内容，"type: "asset/resource"，test进行匹配文件的后缀
+    generator添加filename指定输出位置
+
+11、eslint的使用
+    可组装的 JavaScript 和 JSX 检查工具（它是用来检测 js 和 jsx 语法的工具，可以配置各项功能）
+    需要在webpack中启用eslint,，需要下载相关npm包npm i eslint-webpack-plugin eslint -D
+    在webpack5中，eslint属于插件，插件需要先引入后使用
+    插件都是一个构造函数 因此格式都是new xxx({config})
+
+12、eslint的配置文件
+    文件格式 .eslintrc.js或直接在package.json文件中创建eslintConfig字段中指定配置
+    同理.eslintignore文件是用来存储不用呗eslint检测的文件（例如不用检测dist直接在文件中写入dist即可）
+    他的配置文件主要由这么一些配置组成：
+
+    1、parserOptions 解析选项
+    parserOptions: {
+      ecmaVersion: 6, // ES 语法版本
+      sourceType: "module", // ES 模块化
+      ecmaFeatures: { // ES 其他特性
+        jsx: true // 如果是 React 项目，就需要开启 jsx 语法
+      }
+    }
+
+    2、rules 具体规则
+    "off" 或 0 - 关闭规则
+    "warn" 或 1 - 开启规则，使用警告级别的错误：warn (不会导致程序退出)
+    "error" 或 2 - 开启规则，使用错误级别的错误：error (当被触发的时候，程序会退出)
+    使用规则类似于：
+    semi: "error", // 禁止使用分号
+    规则文档：https://eslint.bootcss.com/docs/rules/
+
+    3、extends 继承
+    extends: ["eslint:recommended"],
+    由于eslint的配置文件过于多，eslint的官方给我们整理了一些常用的文件进行配置
+    当然，如果我们不需要/需要更改文件配置的时候，只需要在rule中进行更改即可（rule的优先级高于extends）
+
+    4、其他配置可查阅官网 https://eslint.bootcss.com/docs/user-guide/configuring
+
+13、babel处理js文件（谁还用IE呀，没写）
+    主要用于将 ES6 语法编写的代码转换为向后兼容的 JavaScript 语法，以便能够运行在当前和旧版本的浏览器或其他环境中
+    babel是load，在webpack官网可直接查阅babel-load的说明
+    tip：exclude是排除文件不做处理（node_modules中的文件是不需要做处理的）
+        options表示选项，能直接在webpack.config中配置
+        也能选择在项目根目录创建babel.config.js文件中创建
+        module.exports={
+        //智能预设，能够编译Es6的语法
+        presets:["babel/preset-env"]
+        }
+
+14、处理HTML文件
+    HTML文件需要手动配置js路径比较麻烦，因此可以下载npm i html-webpack-plugin -D 处理HTML代码的插件
+    引入const HtmlWebpackPlugin = require("html-webpack-plugin");
+    new HtmlWebpackPlugin({
+          // 以 public/index.html 为模板创建文件
+          // 新的html文件有两个特点：1. 内容和源文件一致 2. 自动引入打包生成的js等资源
+          template: path.resolve(__dirname, "public/index.html"),
+        }),
+
+15、开发服务器
+    每次修改文件，都需要重新编译后才能查看，太过于麻烦
+    直接使用开发服务器，随时编译能随时查看效果
+    安装插件 npm i webpack-dev-server -D
+    配置：在module的根目录下进行配置：
+         devServer: {
+                host: "localhost", // 启动服务器域名
+                port: "3000", // 启动服务器端口号
+                open: false, // 是否自动打开浏览器
+            },
+    启动指令：npx webpack serve
+    ps:他只会展示出来随时更新的效果，并不会对文件进行打包并输出，可以查看后无误后打包
+
+16、配置生产环境
+    0：这个模式下我们主要对代码进行优化，让其运行性能更好
+    1、生产环境存在输出，开发环境下没有输出（直接搭建服务器看就行了，当然你要输出也没有人能够拦着你）
+    2、要是有两个config.js文件，需要在使用的时候指定是根据哪个文件夹进行配置 npx webpack --config xxx.js
+    3、配置mode：生产模式下是production，开发模式是development
+    4、生产模式会把代码压缩
+
+17、提取css成单独的文件
+    下载依赖 npm i mini-css-extract-plugin -D
+    引入相关的依赖 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+    插件中定义：
+        new MiniCssExtractPlugin({
+              // 定义输出文件名和目录
+              filename: "static/css/main.css",
+            }),
+    注：在规则rules:[]中use:["style-loader"]需要全部更改成MiniCssExtractPlugin.loader
+    前者是直接嵌入到HTML样式中，后者是生成单独的样式文件
+    由于使用了HTML的插件，生成的代码会直接link到文件中
+
+
+18、css文件的压缩
+    安装插件npm i css-minimizer-webpack-plugin -D
+    引入插件：const CssMinimizerPlugin = require("css-minimizer-webpack-plugin");
+    配置插件：new CssMinimizerPlugin()
+
+---end---
+
+---start（提升开发体验）----
+1、SourceMap
+    在我们的代码被webpack编译以后，会编译成我们都看不懂的东西，但如果有错误的话，我们也不能及时的查找到
+
+    SourceMap（源代码映射）是一个用来生成源代码与构建后代码一一映射的文件的方案。
+    它会生成一个 xxx.map 文件，里面包含源代码和构建后代码每一行、每一列的映射关系。
+    当构建后代码出错了，会通过 xxx.map 文件，从构建后代码出错位置找到映射后源代码出错位置，从而让浏览器提示源代码文件出错位置，帮助我们更快的找到错误根源
+    其实有很多可以选择在https://webpack.docschina.org/configuration/devtool/，这里只是列举常用的
+
+    1）在开发环境中
+    cheap-module-source-map
+    优点：打包编译速度快，只包含行映射
+    缺点：没有列映射
+    在根目录下创建：devtool: "cheap-module-source-map",
+    2）生产环境中
+    source-map
+    优点：包含行/列映射
+    缺点：打包编译速度更慢
+    在根目录下创建：devtool: "source-map"
+
+2、HotModuleReplacement
+    开发时我们修改了其中一个模块代码，Webpack 默认会将所有模块全部重新打包编译，速度很慢。
+    所以我们需要做到修改某个模块代码，就只有这个模块代码需要重新打包编译，其他模块不变，这样打包速度就能很快
+    在 devServer下增加配置项目   hot: true, // 开启HMR功能（只能用于开发环境，生产环境不需要了,开发环境哪里需要构建几次...）
+
+3、oneOf
+    打包时每个文件都会经过所有 loader 处理，虽然因为 test 正则原因实际没有处理上，但是都要过一遍。比较慢
+    比如：我一个css文件经过css处理之后就行了，但是由于正则，经过css处理后，还要经过less，PNG处理
+    在rules中添加一个oneOf，被oneOf包含的文件只能被处理一次，不会再次被其他的rules检测
+    注：嵌套规则如下
+    rules: [
+                {
+                    oneOf: [
+                        {
+                            test: /\.css$/i,
+                            use: [MiniCssExtractPlugin.loader, "css-loader"],
+                        }
+                            ]
+                 }
+           ]
+4、include exclude
+    在很多插件配置/规则中能加上这个选项
+    即：只检查（包括）  除了xxx不检查其他都检查
+
+5、cache
+    每次打包时 js 文件都要经过 Eslint 检查 和 Babel 编译，速度比较慢。
+    我们可以缓存之前的 Eslint 检查 和 Babel 编译结果，这样第二次打包时速度就会更快了。
+    （由于是第二次才生效，就完全没有必要用于生产环境，只要用于开发环境即可）
+
+    在eslint插件选项中，添加属性
+        cache:true,
+        cacheLocation:path.resolve(__dirname,"node_modules/.cache/temp")
+    要是使用了babel
+    {
+                test: /\.js$/,
+                loader: "babel-loader",
+                options: {
+                  cacheDirectory: true, // 开启babel编译缓存
+                  cacheCompression: false, // 缓存文件不要压缩
+                },
+    }
+
+5、Thead
+    多线程操作肯定比代码块一个一个的操作来的更快一点
+    但这只是试用于大的项目，若是项目比较小，使用thead的话反而话减慢加载速度，因为进程的调用也需要时间
+    而对 js 文件处理主要就是 eslint 、babel、Terser 三个工具，所以我们要提升它们的运行速度
+    0）前提操作
+        const os = require("os");
+        const threads = os.cpus().length;
+    1）eslint
+        在插件配置初直接添加属性 threads 表示开启了多线程
+    2）Terser （生产模式下对js的代码进行压缩的操作）
+        const TerserPlugin = require("terser-webpack-plugin");
+        new TerserPlugin({
+                parallel: threads // 开启多进程
+              })
+    3）babel
+        本来以前是使用一个loader:"babel-loader"，
+        但是现在需要添加一个 thread-loader
+        两个load，当然就要触发use了
+        因此babel的配置项为：
+                {
+                    test: /\.js$/,
+                    use: [
+                      {
+                        loader: "thread-loader", // 开启多进程
+                        options: {
+                          workers: threads, // 数量
+                        },
+                      },
+                      {
+                        loader: "babel-loader",
+                        options: {
+                          cacheDirectory: true, // 开启babel编译缓存
+                        },
+                      },
+                    ],
+                  },
+
+---end----
+
+---start（减少代码体积）---
+1、Tree Shaking
+    开发时我们定义了一些工具函数库，或者引用第三方工具函数库或组件库。
+    如果没有特殊处理的话我们打包时会引入整个库，但是实际上可能我们可能只用上极小部分的功能。
+    这样将整个库都打包进来，体积就太大了。
+
+    tree shaking是默认开启的
+    首先没有引入的文件是不会被加载的
+    其次要是文件被引入但是内函数没有被使用的话，也是不会被加载进来的
+
+2、babel减少代码的体积
+    Babel 为编译的每个文件都插入了辅助代码，使代码体积过大！
+    Babel 对一些公共方法使用了非常小的辅助代码，比如 _extend。默认情况下会被添加到每一个需要它的文件中。
+    你可以将这些辅助代码作为一个独立模块，来避免重复引入。
+    1、安装插件
+    npm i @babel/plugin-transform-runtime -D
+
+    2、babel在rules中的
+    loader：“babel-loader”下添加
+        plugins: ["@babel/plugin-transform-runtime"], // 减少代码体积
+
+3、图片压缩
+    使用到了较多的插件，具体的可通过文档的方式进行查询
+
+---end---
+---start（优化代码的运行性能）---
+略...显得有点太过于复杂
+---end---
+
+
+
+
